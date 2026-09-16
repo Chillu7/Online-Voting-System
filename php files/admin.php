@@ -19,13 +19,15 @@ if (isset($_POST['add_candidate'])) {
     $election_date = trim($_POST['election_date'] ?? '');
     
     if (!empty($name) && !empty($position) && !empty($election_year) && !empty($election_date) && isset($_FILES['photo'])) {
-        $photo_dir = 'uploads/';
+        $photo_dir = __DIR__ . '/uploads/';
         if (!is_dir($photo_dir)) mkdir($photo_dir, 0755, true);
         
-        $photo_name = time() . '_' . basename($_FILES['photo']['name']);
-        $photo_path = $photo_dir . $photo_name;
+        $original_name = basename($_FILES['photo']['name']);
+        $safe_name = preg_replace('/[^A-Za-z0-9._-]/', '_', $original_name);
+        $photo_name = time() . '_' . $safe_name;
+        $photo_path = 'uploads/' . $photo_name;
         
-        if (move_uploaded_file($_FILES['photo']['tmp_name'], $photo_path)) {
+        if (move_uploaded_file($_FILES['photo']['tmp_name'], $photo_dir . $photo_name)) {
             try {
                 $sql = "INSERT INTO candidates (name, position, election_year, election_date, photo)
                     VALUES (:name, :position, :year, :election_date, :photo)";
@@ -150,7 +152,7 @@ if (isset($_GET['delete_user']) && $isSuperAdmin) {
                         <td>{$row['position']}</td>
                         <td>{$row['election_year']}</td>
                         <td>{$row['election_date']}</td>
-                        <td><img src='{$row['photo']}' class='candidate-img'></td>
+                        <td><img src='" . htmlspecialchars($row['photo'] ?? '') . "' class='candidate-img' alt='Candidate photo'></td>
                         <td>";
                     if($isSuperAdmin){
                         echo "<a href='{$delete_url}' onclick=\"return confirm('Delete candidate?');\" style='color:red;'>Delete</a>";
