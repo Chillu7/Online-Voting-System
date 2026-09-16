@@ -13,6 +13,7 @@ body {
     font-family: Arial, sans-serif;
     background: #eef2f7;
     min-height: 100%;
+    overflow-x: hidden;
 }
 
 /* ====== HEADER ====== */
@@ -23,6 +24,7 @@ body {
     gap: 20px;
     justify-content: flex-start;
     align-items: center;
+    flex-wrap: wrap;
 }
 
 .header a {
@@ -118,7 +120,7 @@ body:has(.form-container) {
     padding: 15px;
     border-radius: 10px;
     margin: 15px auto;
-    width: 80%;
+    width: min(90%, 1100px);
     text-align: center;
 }
 
@@ -137,7 +139,7 @@ body:has(.form-container) {
     font-size: 22px;
     color: #333;
     text-align: center;
-    width: 80%;
+    width: min(90%, 1100px);
 }
 
 .candidates-grid {
@@ -146,7 +148,7 @@ body:has(.form-container) {
     gap: 15px;
     padding: 15px;
     margin: 0 auto;
-    width: 80%;
+    width: min(90%, 1100px);
 }
 
 .candidate-card {
@@ -186,7 +188,7 @@ body:has(.form-container) {
     padding: 10px;
     border-radius: 8px;
     margin: 10px auto;
-    width: 80%;
+    width: min(90%, 1100px);
     text-align: center;
 }
 
@@ -208,7 +210,7 @@ body:has(.form-container) {
 
 /* ====== RESULTS PAGE ====== */
 .results-container {
-    width: 90%;
+    width: min(90%, 1100px);
     margin: 20px auto;
 }
 
@@ -234,7 +236,7 @@ body:has(.form-container) {
 
 /* ====== ADMIN PANEL ====== */
 .container {
-    width: 90%;
+    width: min(90%, 1200px);
     margin: 0 auto;
     display: flex;
     flex-direction: column;
@@ -306,6 +308,8 @@ table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 15px;
+    display: block;
+    overflow-x: auto;
 }
 
 table,
@@ -445,5 +449,103 @@ td {
     object-fit: cover;
     margin-right: 15px;
     margin-bottom: 0;
+}
+
+@media (max-width: 768px) {
+    .header {
+        gap: 8px;
+        padding: 12px;
+    }
+
+    .header a {
+        flex: 1 1 auto;
+        padding: 10px 12px;
+        text-align: center;
+    }
+
+    .form-container {
+        padding: 24px 18px;
+        margin: 15px;
+        max-width: none;
+    }
+
+    .welcome-box,
+    .position-title,
+    .candidates-grid,
+    .voted-box,
+    .results-container,
+    .container {
+        width: calc(100% - 24px);
+    }
+
+    .candidates-grid {
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        padding: 12px 0;
+    }
+
+    .results-container .candidate-card {
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .results-container .candidate-card img {
+        margin-right: 0;
+    }
+
+    .candidate-info {
+        min-width: 0;
+    }
+
+    .vote-count {
+        width: 100%;
+        text-align: right;
+    }
+
+    .header-section {
+        padding: 28px 0 20px;
+    }
+
+    .header-section h1 {
+        font-size: 1.8em;
+        letter-spacing: 1px;
+    }
+
+    .tab-menu {
+        gap: 8px;
+        padding: 12px 0 24px;
+    }
+
+    .tab-menu button {
+        flex: 1 1 140px;
+        padding: 11px 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .header a {
+        flex-basis: 100%;
+    }
+
+    .welcome-box {
+        padding: 14px 12px;
+    }
+
+    .welcome-box h2 {
+        font-size: 1.25em;
+    }
+
+    .candidates-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .candidate-card {
+        padding: 14px;
+    }
+
+    th,
+    td {
+        white-space: nowrap;
+    }
 }
 

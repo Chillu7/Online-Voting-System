@@ -8,7 +8,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'user') {
     exit;
 }
 
-include 'header.php';
+include __DIR__ . '/Header.php';
 ?>
 
 <!DOCTYPE html>
