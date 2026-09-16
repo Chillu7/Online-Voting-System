@@ -76,6 +76,7 @@ if (isset($_GET['delete_user']) && $isSuperAdmin) {
 <!DOCTYPE html>
 <html>
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
     <style>
         body { font-family: Arial, sans-serif; margin:0; background:#f4f4f4; }
