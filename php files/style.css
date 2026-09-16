@@ -1,0 +1,449 @@
+/* ====== GLOBAL STYLES ====== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    height: 100%;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #eef2f7;
+    min-height: 100%;
+}
+
+/* ====== HEADER ====== */
+.header {
+    background-color: #007bff;
+    padding: 15px 20px;
+    display: flex;
+    gap: 20px;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.header a {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    padding: 8px 15px;
+    border-radius: 5px;
+    transition: 0.3s;
+}
+
+.header a:hover {
+    background-color: #0056b3;
+    text-decoration: none;
+}
+
+/* ====== FORM STYLES (Login & Register) ====== */
+body:has(.form-container) {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.form-container {
+    background: white;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.form-container h2 {
+    color: #333;
+    margin-bottom: 30px;
+}
+
+.form-container form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.form-container input {
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1em;
+    box-sizing: border-box;
+}
+
+.form-container input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+}
+
+.form-container button {
+    padding: 12px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 1em;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.form-container button:hover {
+    background: #0056b3;
+}
+
+.form-container p {
+    margin-top: 20px;
+    color: #666;
+}
+
+.form-container a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.form-container a:hover {
+    text-decoration: underline;
+}
+
+/* ====== DASHBOARD & VOTING STYLES ====== */
+.welcome-box {
+    background: #e6f2ff;
+    padding: 15px;
+    border-radius: 10px;
+    margin: 15px auto;
+    width: 80%;
+    text-align: center;
+}
+
+.welcome-box h2 {
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.welcome-box p {
+    color: #555;
+    margin: 5px 0;
+}
+
+.position-title {
+    margin: 20px auto 10px;
+    font-size: 22px;
+    color: #333;
+    text-align: center;
+    width: 80%;
+}
+
+.candidates-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 15px;
+    padding: 15px;
+    margin: 0 auto;
+    width: 80%;
+}
+
+.candidate-card {
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.candidate-card img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 10px;
+}
+
+.candidate-card h3 {
+    margin: 10px 0 5px;
+    color: #333;
+}
+
+.candidate-card p {
+    margin: 5px 0;
+    color: #666;
+    font-size: 0.9em;
+}
+
+.candidate-card form {
+    margin-top: 10px;
+}
+
+.voted-box {
+    background: #d4edda;
+    color: #155724;
+    padding: 10px;
+    border-radius: 8px;
+    margin: 10px auto;
+    width: 80%;
+    text-align: center;
+}
+
+.vote-btn {
+    background: #007bff;
+    border: none;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.3s;
+    width: 100%;
+}
+
+.vote-btn:hover {
+    background: #0056b3;
+}
+
+/* ====== RESULTS PAGE ====== */
+.results-container {
+    width: 90%;
+    margin: 20px auto;
+}
+
+.results-container h1 {
+    text-align: center;
+    color: #333;
+}
+
+.candidate-info {
+    flex-grow: 1;
+    text-align: left;
+}
+
+.candidate-info div {
+    margin: 5px 0;
+}
+
+.vote-count {
+    font-weight: bold;
+    font-size: 18px;
+    color: #007bff;
+}
+
+/* ====== ADMIN PANEL ====== */
+.container {
+    width: 90%;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.header-section {
+    text-align: center;
+    padding: 40px 0 30px 0;
+}
+
+.header-section h1 {
+    color: #333;
+    margin: 0;
+    font-size: 2.5em;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.tab-menu {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    padding: 20px 0 40px 0;
+    flex-wrap: wrap;
+}
+
+.tab-menu button {
+    background: #007bff;
+    border: none;
+    color: white;
+    padding: 12px 30px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 1em;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.tab-menu button.active,
+.tab-menu button:hover {
+    background: #0056b3;
+}
+
+.content-section {
+    flex: 1;
+}
+
+.section {
+    display: none;
+}
+
+.section.active {
+    display: block;
+}
+
+.section h2 {
+    margin-top: 0;
+    color: #333;
+}
+
+.section h3 {
+    margin-top: 20px;
+    color: #333;
+}
+
+/* ====== TABLES ====== */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+table,
+th,
+td {
+    border: 1px solid #ccc;
+}
+
+th {
+    background: #007bff;
+    color: white;
+    padding: 12px;
+    text-align: center;
+    font-weight: bold;
+}
+
+td {
+    padding: 10px;
+    text-align: center;
+}
+
+/* ====== IMAGES ====== */
+.candidate-img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* ====== ADMIN FORMS ====== */
+.form-container {
+    background: white;
+    padding: 25px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.form-container h3 {
+    margin-top: 0;
+    color: #333;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #333;
+    font-weight: bold;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1em;
+    box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+.form-full {
+    grid-column: 1 / -1;
+}
+
+.form-button {
+    background: #28a745;
+    color: white;
+    padding: 12px 30px;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 1em;
+    transition: 0.3s;
+    width: 100%;
+}
+
+.form-button:hover {
+    background: #218838;
+}
+
+/* ====== ALERTS & MESSAGES ====== */
+.success-message {
+    background: #d4edda;
+    color: #155724;
+    padding: 12px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+}
+
+.error-message {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 12px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+}
+
+/* ====== RESULTS PAGE CANDIDATE CARD FLEX ====== */
+.results-container .candidate-card {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.results-container .candidate-card img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 15px;
+    margin-bottom: 0;
+}
+
