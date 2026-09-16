@@ -198,7 +198,39 @@ if (isset($_GET['delete_user']) && $isSuperAdmin) {
         <!-- Results -->
         <div id="results" class="section">
             <h2>Election Results</h2>
-            <p>Results display section remains unchanged.</p>
+            <?php
+            $stmt_positions = $conn->prepare("SELECT DISTINCT position FROM candidates ORDER BY position");
+            $stmt_positions->execute();
+            $positions = $stmt_positions->fetchAll(PDO::FETCH_ASSOC);
+
+            if ($positions) {
+                foreach ($positions as $position_row) {
+                    $position = $position_row['position'] ?? '';
+                    if (!$position) continue;
+
+                    $stmt_results = $conn->prepare("\n                        SELECT c.name, c.photo, COUNT(v.id) AS total_votes\n                        FROM candidates c\n                        LEFT JOIN votes v ON c.id = v.candidate_id\n                        WHERE c.position = ?\n                        GROUP BY c.id, c.name, c.photo\n                        ORDER BY total_votes DESC, c.name ASC\n                    ");
+                    $stmt_results->execute([$position]);
+                    $results = $stmt_results->fetchAll(PDO::FETCH_ASSOC);
+
+                    echo '<h3>' . htmlspecialchars($position) . '</h3>';
+                    if ($results) {
+                        echo '<table><tr><th>Candidate</th><th>Photo</th><th>Total Votes</th></tr>';
+                        foreach ($results as $result) {
+                            echo '<tr>';
+                            echo '<td>' . htmlspecialchars($result['name'] ?? '') . '</td>';
+                            echo '<td><img src="' . htmlspecialchars($result['photo'] ?? '') . '" class="candidate-img" alt="Candidate photo"></td>';
+                            echo '<td><strong>' . intval($result['total_votes'] ?? 0) . '</strong></td>';
+                            echo '</tr>';
+                        }
+                        echo '</table>';
+                    } else {
+                        echo '<p>No results available for this position.</p>';
+                    }
+                }
+            } else {
+                echo '<p>No election results available yet.</p>';
+            }
+            ?>
         </div>
 
     </div>
