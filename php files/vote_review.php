@@ -7,6 +7,13 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'user') {
     exit;
 }
 
+$settings = $conn->query('SELECT starts_at, ends_at FROM election_settings WHERE id = 1')->fetch(PDO::FETCH_ASSOC);
+$now = new DateTimeImmutable();
+if (!$settings || $now < new DateTimeImmutable($settings['starts_at']) || $now > new DateTimeImmutable($settings['ends_at'])) {
+    header('Location: dashboard.php?error=' . urlencode('Voting is currently closed.'));
+    exit;
+}
+
 $cid = filter_input(INPUT_POST, 'cid', FILTER_VALIDATE_INT);
 $position = trim($_POST['position'] ?? '');
 if (!$cid || $position === '') {

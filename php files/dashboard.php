@@ -86,11 +86,12 @@ try {
                         <p><small>Position: {$c_position}</small></p>
                         <p><strong>Biography:</strong> {$c_biography}</p>
                         <p><strong>Manifesto:</strong> {$c_manifesto}</p>
+                        " . ($election_open && !empty($_SESSION['is_eligible']) ? "
                         <form method='POST' action='vote_review.php'>
                             <input type='hidden' name='cid' value='{$c_id}'>
                             <input type='hidden' name='position' value='{$c_position}'>
                             <button class='vote-btn' type='submit'>Review vote</button>
-                        </form>
+                        </form>" : "<div class='vote-closed'>Voting is closed</div>") . "
                     </div>";
                 }
             } else {
