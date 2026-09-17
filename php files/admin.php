@@ -20,9 +20,13 @@ if (isset($_POST['add_candidate'])) {
     $biography = trim($_POST['biography'] ?? '');
     $manifesto = trim($_POST['manifesto'] ?? '');
     
-    if (!empty($name) && !empty($position) && !empty($election_year) && !empty($election_date) && isset($_FILES['photo'])) {
-        $photo_data = file_get_contents($_FILES['photo']['tmp_name']);
-        $photo_mime = mime_content_type($_FILES['photo']['tmp_name']);
+    if (!empty($name) && !empty($position) && !empty($election_year) && !empty($election_date) && isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
+        
+        // Soma binary data na MIME kabla ya kuhamisha faili
+        $tmp_name = $_FILES['photo']['tmp_name'];
+        $photo_data = file_get_contents($tmp_name);
+        $photo_mime = mime_content_type($tmp_name);
+        
         $photo_dir = __DIR__ . '/uploads/';
         if (!is_dir($photo_dir)) mkdir($photo_dir, 0755, true);
         
@@ -31,7 +35,7 @@ if (isset($_POST['add_candidate'])) {
         $photo_name = time() . '_' . $safe_name;
         $photo_path = 'uploads/' . $photo_name;
         
-        if (move_uploaded_file($_FILES['photo']['tmp_name'], $photo_dir . $photo_name)) {
+        if (move_uploaded_file($tmp_name, $photo_dir . $photo_name)) {
             try {
                 $sql = "INSERT INTO candidates (name, position, election_year, election_date, photo, photo_data, photo_mime, biography, manifesto)
                     VALUES (:name, :position, :year, :election_date, :photo, :photo_data, :photo_mime, :biography, :manifesto)";
@@ -46,6 +50,7 @@ if (isset($_POST['add_candidate'])) {
                 $stmt->bindValue(':biography', $biography, PDO::PARAM_STR);
                 $stmt->bindValue(':manifesto', $manifesto, PDO::PARAM_STR);
                 $stmt->execute();
+                
                 header("Location: admin.php?success=1");
                 exit;
             } catch (PDOException $e) {
@@ -262,7 +267,14 @@ if (isset($_GET['delete_user']) && $isSuperAdmin) {
                     $position = $position_row['position'] ?? '';
                     if (!$position) continue;
 
-                    $stmt_results = $conn->prepare("\n                        SELECT c.id, c.name, c.photo, COUNT(v.id) AS total_votes\n                        FROM candidates c\n                        LEFT JOIN votes v ON c.id = v.candidate_id\n                        WHERE c.position = ?\n                        GROUP BY c.id, c.name, c.photo\n                        ORDER BY total_votes DESC, c.name ASC\n                    ");
+                    $stmt_results = $conn->prepare("
+                       SELECT c.id, c.name, c.photo, COUNT(v.id) AS total_votes
+                       FROM candidates c
+                       LEFT JOIN votes v ON c.id = v.candidate_id
+                       WHERE c.position = ?
+                       GROUP BY c.id, c.name, c.photo
+                       ORDER BY total_votes DESC, c.name ASC
+                    ");
                     $stmt_results->execute([$position]);
                     $results = $stmt_results->fetchAll(PDO::FETCH_ASSOC);
 
