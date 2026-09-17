@@ -36,17 +36,16 @@ if (isset($_POST['add_candidate'])) {
                 $sql = "INSERT INTO candidates (name, position, election_year, election_date, photo, photo_data, photo_mime, biography, manifesto)
                     VALUES (:name, :position, :year, :election_date, :photo, :photo_data, :photo_mime, :biography, :manifesto)";
                 $stmt = $conn->prepare($sql);
-                $stmt->execute([
-                    ':name' => $name,
-                    ':position' => $position,
-                    ':year' => $election_year,
-                    ':election_date' => $election_date,
-                    ':photo' => $photo_path,
-                    ':photo_data' => $photo_data,
-                    ':photo_mime' => $photo_mime,
-                    ':biography' => $biography,
-                    ':manifesto' => $manifesto
-                ]);
+                $stmt->bindValue(':name', $name, PDO::PARAM_STR);
+                $stmt->bindValue(':position', $position, PDO::PARAM_STR);
+                $stmt->bindValue(':year', $election_year, PDO::PARAM_STR);
+                $stmt->bindValue(':election_date', $election_date, PDO::PARAM_STR);
+                $stmt->bindValue(':photo', $photo_path, PDO::PARAM_STR);
+                $stmt->bindValue(':photo_data', $photo_data, PDO::PARAM_LOB);
+                $stmt->bindValue(':photo_mime', $photo_mime, PDO::PARAM_STR);
+                $stmt->bindValue(':biography', $biography, PDO::PARAM_STR);
+                $stmt->bindValue(':manifesto', $manifesto, PDO::PARAM_STR);
+                $stmt->execute();
                 header("Location: admin.php?success=1");
                 exit;
             } catch (PDOException $e) {
