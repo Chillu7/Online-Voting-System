@@ -60,6 +60,78 @@ if (isset($_POST['add_candidate'])) {
     }
 }
 
+// ------------------ EDIT CANDIDATE ------------------
+if (isset($_POST['update_candidate'])) {
+    $candidate_id = filter_input(INPUT_POST, 'candidate_id', FILTER_VALIDATE_INT);
+    $name = trim($_POST['name'] ?? '');
+    $position = trim($_POST['position'] ?? '');
+    $election_year = trim($_POST['election_year'] ?? '');
+    $election_date = trim($_POST['election_date'] ?? '');
+    $biography = trim($_POST['biography'] ?? '');
+    $manifesto = trim($_POST['manifesto'] ?? '');
+
+    if ($candidate_id && $name !== '' && $position !== '' && $election_year !== '' && $election_date !== '') {
+        try {
+            $photo_upload = isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK;
+            if ($photo_upload) {
+                $tmp_name = $_FILES['photo']['tmp_name'];
+                $photo_data = file_get_contents($tmp_name);
+                $photo_mime = mime_content_type($tmp_name) ?: 'application/octet-stream';
+                $photo_dir = __DIR__ . '/uploads/';
+                if (!is_dir($photo_dir)) mkdir($photo_dir, 0755, true);
+
+                $safe_name = preg_replace('/[^A-Za-z0-9._-]/', '_', basename($_FILES['photo']['name']));
+                $photo_name = time() . '_' . $safe_name;
+                $photo_path = 'uploads/' . $photo_name;
+
+                if (!move_uploaded_file($tmp_name, $photo_dir . $photo_name)) {
+                    throw new RuntimeException('The new photo could not be uploaded.');
+                }
+
+                $sql = "UPDATE candidates
+                    SET name = :name, position = :position, election_year = :year,
+                        election_date = :election_date, photo = :photo, photo_data = :photo_data,
+                        photo_mime = :photo_mime, biography = :biography, manifesto = :manifesto
+                    WHERE id = :id";
+                $stmt = $conn->prepare($sql);
+                $stmt->bindValue(':photo', $photo_path, PDO::PARAM_STR);
+                $stmt->bindValue(':photo_data', $photo_data, PDO::PARAM_LOB);
+                $stmt->bindValue(':photo_mime', $photo_mime, PDO::PARAM_STR);
+            } else {
+                $sql = "UPDATE candidates
+                    SET name = :name, position = :position, election_year = :year,
+                        election_date = :election_date, biography = :biography, manifesto = :manifesto
+                    WHERE id = :id";
+                $stmt = $conn->prepare($sql);
+            }
+
+            $stmt->bindValue(':name', $name, PDO::PARAM_STR);
+            $stmt->bindValue(':position', $position, PDO::PARAM_STR);
+            $stmt->bindValue(':year', $election_year, PDO::PARAM_STR);
+            $stmt->bindValue(':election_date', $election_date, PDO::PARAM_STR);
+            $stmt->bindValue(':biography', $biography, PDO::PARAM_STR);
+            $stmt->bindValue(':manifesto', $manifesto, PDO::PARAM_STR);
+            $stmt->bindValue(':id', $candidate_id, PDO::PARAM_INT);
+            $stmt->execute();
+
+            header('Location: admin.php?candidate_updated=1');
+            exit;
+        } catch (Throwable $e) {
+            echo "<p style='color:red'>Error updating candidate: " . htmlspecialchars($e->getMessage()) . "</p>";
+        }
+    }
+}
+
+$edit_candidate = null;
+if (isset($_GET['edit_candidate'])) {
+    $edit_id = filter_input(INPUT_GET, 'edit_candidate', FILTER_VALIDATE_INT);
+    if ($edit_id) {
+        $edit_stmt = $conn->prepare('SELECT id, name, position, election_year, election_date, biography, manifesto FROM candidates WHERE id = ?');
+        $edit_stmt->execute([$edit_id]);
+        $edit_candidate = $edit_stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    }
+}
+
 if (isset($_POST['save_settings']) && $isSuperAdmin) {
     $settings_stmt = $conn->prepare('UPDATE election_settings SET institution_name = ?, election_title = ?, starts_at = ?, ends_at = ?, results_visible = ?, updated_at = CURRENT_TIMESTAMP WHERE id = 1');
     $settings_stmt->execute([
@@ -161,6 +233,24 @@ if (isset($_GET['delete_user']) && $isSuperAdmin) {
         <div id="candidates" class="section active">
             <h2>All Candidates</h2>
 
+            <?php if ($edit_candidate): ?>
+            <div class="form-container">
+                <h3>Edit Candidate</h3>
+                <form method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="candidate_id" value="<?php echo (int) $edit_candidate['id']; ?>">
+                    <input type="text" name="name" value="<?php echo htmlspecialchars($edit_candidate['name']); ?>" placeholder="Candidate Name" required>
+                    <input type="text" name="position" value="<?php echo htmlspecialchars($edit_candidate['position']); ?>" placeholder="Position" required>
+                    <input type="text" name="election_year" value="<?php echo htmlspecialchars($edit_candidate['election_year']); ?>" placeholder="Year" required>
+                    <input type="date" name="election_date" value="<?php echo htmlspecialchars($edit_candidate['election_date']); ?>" required>
+                    <input type="file" name="photo" accept="image/*">
+                    <textarea name="biography" placeholder="Candidate biography"><?php echo htmlspecialchars($edit_candidate['biography'] ?? ''); ?></textarea>
+                    <textarea name="manifesto" placeholder="Candidate manifesto"><?php echo htmlspecialchars($edit_candidate['manifesto'] ?? ''); ?></textarea>
+                    <button type="submit" name="update_candidate" class="form-button">Save Candidate</button>
+                    <a href="admin.php">Cancel</a>
+                </form>
+            </div>
+            <?php endif; ?>
+
             <form method="POST" enctype="multipart/form-data">
                 <input type="text" name="name" placeholder="Candidate Name" required>
                 <input type="text" name="position" placeholder="Position" required>
@@ -188,7 +278,7 @@ if (isset($_GET['delete_user']) && $isSuperAdmin) {
                         <td>{$row['election_year']}</td>
                         <td>{$row['election_date']}</td>
                         <td><img src='image.php?id=" . intval($row['id']) . "' class='candidate-img' alt='Candidate photo'></td>
-                        <td>";
+                        <td><a href='admin.php?edit_candidate=" . intval($row['id']) . "'>Edit</a> ";
                     if($isSuperAdmin){
                         echo "<a href='{$delete_url}' onclick=\"return confirm('Delete candidate?');\" style='color:red;'>Delete</a>";
                     } else {

@@ -29,13 +29,18 @@ if (!$candidate) {
     <title>Review Vote</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="review-page">
 <?php include __DIR__ . '/Header.php'; ?>
-<div class="form-container">
+<main class="review-container">
+<div class="review-card">
     <h2>Review your choice</h2>
     <img class="review-photo" src="image.php?id=<?php echo (int) $candidate['id']; ?>" alt="Candidate photo">
-    <p><strong>Position:</strong> <?php echo htmlspecialchars($candidate['position']); ?></p>
-    <p><strong>Candidate:</strong> <?php echo htmlspecialchars($candidate['name']); ?></p>
+    <div class="review-details">
+        <p><strong>Position:</strong> <?php echo htmlspecialchars($candidate['position']); ?></p>
+        <p><strong>Candidate:</strong> <?php echo htmlspecialchars($candidate['name']); ?></p>
+        <?php if (!empty($candidate['biography'])): ?><p><strong>Biography:</strong> <?php echo nl2br(htmlspecialchars($candidate['biography'])); ?></p><?php endif; ?>
+        <?php if (!empty($candidate['manifesto'])): ?><p><strong>Manifesto:</strong> <?php echo nl2br(htmlspecialchars($candidate['manifesto'])); ?></p><?php endif; ?>
+    </div>
     <p>Confirming will record one vote for this position.</p>
     <form method="POST" action="vote.php">
         <input type="hidden" name="cid" value="<?php echo (int) $candidate['id']; ?>">
@@ -44,5 +49,6 @@ if (!$candidate) {
     </form>
     <p><a href="dashboard.php">Go back and change choice</a></p>
 </div>
+</main>
 </body>
 </html>
