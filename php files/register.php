@@ -7,11 +7,12 @@ $success = '';
 if (isset($_POST['register'])) {
     $fullname = trim($_POST['fullname']);
     $username = trim($_POST['username']);
+    $registration_number = strtoupper(trim($_POST['registration_number'] ?? ''));
     $password = $_POST['password'];
     $confirm_password = $_POST['confirm_password'];
     
     // Validation
-    if (empty($fullname) || empty($username) || empty($password) || empty($confirm_password)) {
+    if (empty($fullname) || empty($username) || empty($registration_number) || empty($password) || empty($confirm_password)) {
         $error = 'All fields are required';
     } elseif (strlen($password) < 6) {
         $error = 'Password must be at least 6 characters';
@@ -21,17 +22,17 @@ if (isset($_POST['register'])) {
         $error = 'Please enter a valid email address';
     } else {
         // Check if email already exists
-        $check_sql = "SELECT id FROM users WHERE username = ?";
+        $check_sql = "SELECT id FROM users WHERE username = ? OR registration_number = ?";
         $check_stmt = $conn->prepare($check_sql);
-        $check_stmt->execute([$username]);
+        $check_stmt->execute([$username, $registration_number]);
 
         if ($check_stmt->fetch(PDO::FETCH_ASSOC)) {
             $error = 'Email already registered. Please use a different email or <a href="login.php">login here</a>';
         } else {
             // Register new user
             $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-            $sql = "INSERT INTO users(fullname, username, password, role) VALUES(?, ?, ?, ?)";
-            $params = array($fullname, $username, $hashed_password, 'user');
+            $sql = "INSERT INTO users(fullname, username, registration_number, password, role) VALUES(?, ?, ?, ?, ?)";
+            $params = array($fullname, $username, $registration_number, $hashed_password, 'user');
             try {
                 $stmt = $conn->prepare($sql);
                 $stmt->execute($params);
@@ -67,6 +68,7 @@ if (isset($_POST['register'])) {
     <form method="POST">
         <input type="text" name="fullname" placeholder="Full Name" required>
         <input type="email" name="username" placeholder="Email" required>
+        <input type="text" name="registration_number" placeholder="Student Registration Number / Voter ID" required>
         <input type="password" name="password" placeholder="Password" required>
         <input type="password" name="confirm_password" placeholder="Confirm Password" required>
         <button name="register">Register</button>

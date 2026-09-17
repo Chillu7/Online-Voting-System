@@ -9,6 +9,9 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'user') {
 }
 
 include __DIR__ . '/Header.php';
+$settings = $conn->query('SELECT * FROM election_settings WHERE id = 1')->fetch(PDO::FETCH_ASSOC);
+$now = new DateTimeImmutable();
+$results_available = $settings && ($settings['results_visible'] || $now > new DateTimeImmutable($settings['ends_at']));
 ?>
 
 <!DOCTYPE html>
@@ -20,9 +23,13 @@ include __DIR__ . '/Header.php';
 </head>
 <body>
 <div class="results-container">
-<h1>🗳️ Election Results</h1>
+<h1>🗳️ <?php echo htmlspecialchars($settings['institution_name'] ?? 'Election'); ?> Results</h1>
 
 <?php
+if (!$results_available) {
+    echo '<p style="text-align:center;">Results will be available after voting closes.</p></div></body></html>';
+    exit;
+}
 try {
     // Fetch distinct positions
     $stmt_positions = $conn->prepare('SELECT DISTINCT position FROM candidates ORDER BY position');
@@ -54,7 +61,7 @@ try {
                 $has_results = true;
                 foreach ($candidates as $c) {
                     $c_name = htmlspecialchars($c['name'] ?? '');
-                    $c_photo = htmlspecialchars($c['photo'] ?? '');
+                    $c_photo = 'image.php?id=' . intval($c['id']);
                     $c_position = htmlspecialchars($c['position'] ?? '');
                     $c_votes = intval($c['total_votes'] ?? 0);
 

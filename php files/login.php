@@ -16,7 +16,7 @@ if (isset($_POST['login'])) {
         $error = 'Please enter both email and password';
     } else {
 
-        $sql = "SELECT id, fullname, username, password, role
+        $sql = "SELECT id, fullname, username, registration_number, is_eligible, password, role
                 FROM users
                 WHERE LOWER(TRIM(username)) = ?";
 
@@ -34,6 +34,8 @@ if (isset($_POST['login'])) {
                     $_SESSION['user_id']  = $user['id'];
                     $_SESSION['username'] = $user['username'];
                     $_SESSION['fullname'] = $user['fullname'];
+                    $_SESSION['registration_number'] = $user['registration_number'];
+                    $_SESSION['is_eligible'] = (bool) $user['is_eligible'];
                     // clean role for consistent comparison
                     $_SESSION['role']     = strtolower(trim($user['role']));
 

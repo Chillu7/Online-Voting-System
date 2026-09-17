@@ -8,6 +8,11 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'user') {
 }
 
 include __DIR__ . '/Header.php';
+$settings = $conn->query('SELECT * FROM election_settings WHERE id = 1')->fetch(PDO::FETCH_ASSOC);
+$now = new DateTimeImmutable();
+$starts_at = new DateTimeImmutable($settings['starts_at']);
+$ends_at = new DateTimeImmutable($settings['ends_at']);
+$election_open = $now >= $starts_at && $now <= $ends_at;
 ?>
 
 <!DOCTYPE html>
@@ -19,8 +24,11 @@ include __DIR__ . '/Header.php';
 </head>
 <body>
 <div class="welcome-box">
-    <h2>🗳️ Welcome to Online Voting System</h2>
+    <h2>🗳️ <?php echo htmlspecialchars($settings['institution_name']); ?> <?php echo htmlspecialchars($settings['election_title']); ?></h2>
     <p>Hi <strong><?php echo htmlspecialchars($_SESSION['fullname'] ?? ''); ?></strong>, please vote carefully and choose the best leaders for each position.</p>
+    <p>Voting period: <?php echo htmlspecialchars($starts_at->format('d M Y H:i')); ?> - <?php echo htmlspecialchars($ends_at->format('d M Y H:i')); ?></p>
+    <?php if (empty($_SESSION['is_eligible'])): ?><div class="voted-box">Your voter ID is awaiting admin verification. You cannot vote yet.</div><?php endif; ?>
+    <?php if (!$election_open): ?><div class="voted-box">Voting is currently closed.</div><?php endif; ?>
     <?php
     if (!empty($_GET['success'])) {
         echo "<div style='background:#d4edda; color:#155724; padding:10px; border-radius:4px; margin-top:10px;'>✓ " . htmlspecialchars($_GET['success']) . "</div>";
@@ -58,7 +66,7 @@ try {
             }
 
             // Fetch candidates
-            $stmt_cand = $conn->prepare('SELECT id, name, photo, position FROM candidates WHERE position = ? ORDER BY name');
+            $stmt_cand = $conn->prepare('SELECT id, name, photo, position, biography, manifesto FROM candidates WHERE position = ? ORDER BY name');
             $stmt_cand->execute([$position]);
             $candidates = $stmt_cand->fetchAll(PDO::FETCH_ASSOC);
 
@@ -66,19 +74,22 @@ try {
             if ($candidates) {
                 foreach ($candidates as $c) {
                     $c_name = htmlspecialchars($c['name'] ?? '');
-                    $c_photo = htmlspecialchars($c['photo'] ?? '');
                     $c_position = htmlspecialchars($c['position'] ?? '');
                     $c_id = intval($c['id'] ?? 0);
+                    $c_biography = htmlspecialchars($c['biography'] ?? '');
+                    $c_manifesto = htmlspecialchars($c['manifesto'] ?? '');
 
                     echo "
                     <div class='candidate-card'>
-                        <img src='{$c_photo}' alt='{$c_name}'>
+                        <img src='image.php?id={$c_id}' alt='{$c_name}'>
                         <h3>{$c_name}</h3>
                         <p><small>Position: {$c_position}</small></p>
-                        <form method='POST' action='vote.php'>
+                        <p><strong>Biography:</strong> {$c_biography}</p>
+                        <p><strong>Manifesto:</strong> {$c_manifesto}</p>
+                        <form method='POST' action='vote_review.php'>
                             <input type='hidden' name='cid' value='{$c_id}'>
                             <input type='hidden' name='position' value='{$c_position}'>
-                            <button class='vote-btn' type='submit'>Vote</button>
+                            <button class='vote-btn' type='submit'>Review vote</button>
                         </form>
                     </div>";
                 }

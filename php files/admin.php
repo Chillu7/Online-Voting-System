@@ -17,8 +17,12 @@ if (isset($_POST['add_candidate'])) {
     $position = trim($_POST['position'] ?? '');
     $election_year = trim($_POST['election_year'] ?? '');
     $election_date = trim($_POST['election_date'] ?? '');
+    $biography = trim($_POST['biography'] ?? '');
+    $manifesto = trim($_POST['manifesto'] ?? '');
     
     if (!empty($name) && !empty($position) && !empty($election_year) && !empty($election_date) && isset($_FILES['photo'])) {
+        $photo_data = file_get_contents($_FILES['photo']['tmp_name']);
+        $photo_mime = mime_content_type($_FILES['photo']['tmp_name']);
         $photo_dir = __DIR__ . '/uploads/';
         if (!is_dir($photo_dir)) mkdir($photo_dir, 0755, true);
         
@@ -29,15 +33,19 @@ if (isset($_POST['add_candidate'])) {
         
         if (move_uploaded_file($_FILES['photo']['tmp_name'], $photo_dir . $photo_name)) {
             try {
-                $sql = "INSERT INTO candidates (name, position, election_year, election_date, photo)
-                    VALUES (:name, :position, :year, :election_date, :photo)";
+                $sql = "INSERT INTO candidates (name, position, election_year, election_date, photo, photo_data, photo_mime, biography, manifesto)
+                    VALUES (:name, :position, :year, :election_date, :photo, :photo_data, :photo_mime, :biography, :manifesto)";
                 $stmt = $conn->prepare($sql);
                 $stmt->execute([
                     ':name' => $name,
                     ':position' => $position,
                     ':year' => $election_year,
                     ':election_date' => $election_date,
-                    ':photo' => $photo_path
+                    ':photo' => $photo_path,
+                    ':photo_data' => $photo_data,
+                    ':photo_mime' => $photo_mime,
+                    ':biography' => $biography,
+                    ':manifesto' => $manifesto
                 ]);
                 header("Location: admin.php?success=1");
                 exit;
@@ -46,6 +54,26 @@ if (isset($_POST['add_candidate'])) {
             }
         }
     }
+}
+
+if (isset($_POST['save_settings']) && $isSuperAdmin) {
+    $settings_stmt = $conn->prepare('UPDATE election_settings SET institution_name = ?, election_title = ?, starts_at = ?, ends_at = ?, results_visible = ?, updated_at = CURRENT_TIMESTAMP WHERE id = 1');
+    $settings_stmt->execute([
+        trim($_POST['institution_name'] ?? 'DIT'),
+        trim($_POST['election_title'] ?? 'Student Online Voting System'),
+        str_replace('T', ' ', $_POST['starts_at'] ?? ''),
+        str_replace('T', ' ', $_POST['ends_at'] ?? ''),
+        isset($_POST['results_visible'])
+    ]);
+    header('Location: admin.php?settings_saved=1');
+    exit;
+}
+
+if (isset($_POST['save_eligibility']) && $isSuperAdmin) {
+    $eligibility_stmt = $conn->prepare('UPDATE users SET is_eligible = ? WHERE id = ? AND role = ?');
+    $eligibility_stmt->execute([isset($_POST['is_eligible']), (int) $_POST['user_id'], 'user']);
+    header('Location: admin.php?eligibility_saved=1');
+    exit;
 }
 
 // ------------------ DELETE CANDIDATE ------------------
@@ -118,6 +146,7 @@ if (isset($_GET['delete_user']) && $isSuperAdmin) {
 
     <div class="tab-menu">
         <button id="candidates-btn" onclick="showSection('candidates')">Candidates</button>
+        <?php if ($isSuperAdmin): ?><button id="settings-btn" onclick="showSection('settings')">Election Settings</button><?php endif; ?>
         <button id="users-btn" onclick="showSection('users')">Users</button>
         <button id="results-btn" onclick="showSection('results')">Results</button>
     </div>
@@ -134,6 +163,8 @@ if (isset($_GET['delete_user']) && $isSuperAdmin) {
                 <input type="text" name="election_year" placeholder="Year" required>
                 <input type="date" name="election_date" required>
                 <input type="file" name="photo" accept="image/*" required>
+                <textarea name="biography" placeholder="Candidate biography"></textarea>
+                <textarea name="manifesto" placeholder="Candidate manifesto"></textarea>
                 <button type="submit" name="add_candidate" class="form-button">Add Candidate</button>
             </form>
 
@@ -152,7 +183,7 @@ if (isset($_GET['delete_user']) && $isSuperAdmin) {
                         <td>{$row['position']}</td>
                         <td>{$row['election_year']}</td>
                         <td>{$row['election_date']}</td>
-                        <td><img src='" . htmlspecialchars($row['photo'] ?? '') . "' class='candidate-img' alt='Candidate photo'></td>
+                        <td><img src='image.php?id=" . intval($row['id']) . "' class='candidate-img' alt='Candidate photo'></td>
                         <td>";
                     if($isSuperAdmin){
                         echo "<a href='{$delete_url}' onclick=\"return confirm('Delete candidate?');\" style='color:red;'>Delete</a>";
@@ -166,23 +197,45 @@ if (isset($_GET['delete_user']) && $isSuperAdmin) {
             ?>
         </div>
 
+        <?php if ($isSuperAdmin): $settings = $conn->query('SELECT * FROM election_settings WHERE id = 1')->fetch(PDO::FETCH_ASSOC); ?>
+        <div id="settings" class="section">
+            <h2>Election Settings</h2>
+            <form method="POST">
+                <input type="text" name="institution_name" value="<?php echo htmlspecialchars($settings['institution_name']); ?>" placeholder="Institution name" required>
+                <input type="text" name="election_title" value="<?php echo htmlspecialchars($settings['election_title']); ?>" placeholder="Election title" required>
+                <label>Starts at <input type="datetime-local" name="starts_at" value="<?php echo date('Y-m-d\TH:i', strtotime($settings['starts_at'])); ?>" required></label>
+                <label>Ends at <input type="datetime-local" name="ends_at" value="<?php echo date('Y-m-d\TH:i', strtotime($settings['ends_at'])); ?>" required></label>
+                <label><input type="checkbox" name="results_visible" <?php echo $settings['results_visible'] ? 'checked' : ''; ?>> Show live results</label>
+                <button type="submit" name="save_settings" class="form-button">Save Election Settings</button>
+            </form>
+        </div>
+        <?php endif; ?>
+
         <!-- Users -->
         <div id="users" class="section">
             <h2>All Users</h2>
 
             <?php
-            $stmt = $conn->prepare("SELECT id, fullname, username, role FROM users ORDER BY id DESC");
+            $stmt = $conn->prepare("SELECT id, fullname, username, registration_number, is_eligible, role FROM users ORDER BY id DESC");
             $stmt->execute();
             $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             if ($users) {
-                echo "<table><tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Action</th></tr>";
+                echo "<table><tr><th>ID</th><th>Name</th><th>Email</th><th>Registration Number</th><th>Eligible</th><th>Role</th><th>Action</th></tr>";
                 foreach ($users as $user) {
                     $delete_url = "admin.php?delete_user=" . $user['id'];
                     echo "<tr>
                         <td>{$user['id']}</td>
                         <td>{$user['fullname']}</td>
                         <td>{$user['username']}</td>
+                        <td>{$user['registration_number']}</td>
+                        <td>
+                            <form method='POST'>
+                                <input type='hidden' name='user_id' value='{$user['id']}'>
+                                <input type='checkbox' name='is_eligible' onchange='this.form.submit()' " . ($user['is_eligible'] ? 'checked' : '') . ">
+                                <input type='hidden' name='save_eligibility' value='1'>
+                            </form>
+                        </td>
                         <td>{$user['role']}</td>
                         <td>";
                     if($isSuperAdmin && $user['role'] !== 'admin'){
@@ -210,7 +263,7 @@ if (isset($_GET['delete_user']) && $isSuperAdmin) {
                     $position = $position_row['position'] ?? '';
                     if (!$position) continue;
 
-                    $stmt_results = $conn->prepare("\n                        SELECT c.name, c.photo, COUNT(v.id) AS total_votes\n                        FROM candidates c\n                        LEFT JOIN votes v ON c.id = v.candidate_id\n                        WHERE c.position = ?\n                        GROUP BY c.id, c.name, c.photo\n                        ORDER BY total_votes DESC, c.name ASC\n                    ");
+                    $stmt_results = $conn->prepare("\n                        SELECT c.id, c.name, c.photo, COUNT(v.id) AS total_votes\n                        FROM candidates c\n                        LEFT JOIN votes v ON c.id = v.candidate_id\n                        WHERE c.position = ?\n                        GROUP BY c.id, c.name, c.photo\n                        ORDER BY total_votes DESC, c.name ASC\n                    ");
                     $stmt_results->execute([$position]);
                     $results = $stmt_results->fetchAll(PDO::FETCH_ASSOC);
 
@@ -220,7 +273,7 @@ if (isset($_GET['delete_user']) && $isSuperAdmin) {
                         foreach ($results as $result) {
                             echo '<tr>';
                             echo '<td>' . htmlspecialchars($result['name'] ?? '') . '</td>';
-                            echo '<td><img src="' . htmlspecialchars($result['photo'] ?? '') . '" class="candidate-img" alt="Candidate photo"></td>';
+                            echo '<td><img src="image.php?id=' . intval($result['id'] ?? 0) . '" class="candidate-img" alt="Candidate photo"></td>';
                             echo '<td><strong>' . intval($result['total_votes'] ?? 0) . '</strong></td>';
                             echo '</tr>';
                         }
